@@ -1,0 +1,136 @@
+<goal>
+I need a BigQuery SQL query that {{STATE YOUR DESIRED ENDRESULT HERE}}. 
+</goal>
+
+<table_info>
+Table path: {{COPY BIGQUERY TABLE PATH HERE}}
+
+Table Schema: {{COPY BIGQUERY TABLE JSON SCHEMA HERE}}
+</table_info>
+
+<return_format>
+Please respond with a single SQL query that is:
+1. Complete and ready to copy-paste into the BigQuery console
+2. Well-commented with:
+   - Section headers as `-- SECTION: Description`
+   - Explanations for complex logic
+   - Assumptions made while writing the query
+   - Performance considerations and cost warnings
+   - Estimated data processed (when possible to determine)
+
+Example format:
+/*
+-- SECTION: Query to calculate daily active users
+-- Purpose: This query finds unique daily active users by date
+-- Cost warning: Processes approximately XX GB per month of data
+*/
+
+select
+    date(timestamp) as date,  /* Convert to date for daily aggregation */
+    count(distinct user_id) as daily_active_users  /* Count unique users */
+from `{FULL_TABLE_PATH}`
+where date(timestamp) >= date_sub(current_date(), interval 30 day)  /* Limit to last 30 days to reduce processed data */
+group by date
+order by date desc
+</return_format>
+
+<sql_style_guide>
+General
+- Prioritize readability and maintainability
+- Keep lines to maximum 120 characters
+- Use lowercase snake_case for all identifiers and aliases
+- Avoid using reserved keywords as identifiers
+- Use spaces only (no tabs)
+
+Syntax
+- Use lowercase for all keywords and functions
+- Use != (not <>)
+- Use || for string concatenation (not concat)
+- Use coalesce (not ifnull or nvl)
+- Use is null, is not null (not isnull, notnull)
+- Use case expressions (not iff or if)
+- Always alias columns/tables using as keyword
+- Prefer where over having when possible
+- Prefer union all unless duplicate removal is needed
+- Use select distinct instead of grouping by all columns
+- Avoid unnecessary order by clauses
+- Format date parts as strings: date_trunc('month', col)
+- Use single quotes for strings
+- Use /* */ for comments and align multi-line comments neatly
+
+Joins
+- Always use explicit joins (inner join, not just join)
+- Place join conditions after on, prefix with first table mentioned
+- Keep filters in where clause, not in join conditions
+- Always prefix columns with table/alias
+- Don't use using clause
+
+CTEs
+- Prefer CTEs over subqueries
+- Use clear, descriptive CTE names (no cte suffix)
+
+Naming
+- Name primary keys as id
+- Name dates as event_date, timestamps as event_at; add timezone suffix when needed (_et, _pt)
+- Start boolean columns with verbs (is_, has_, does_)
+- Add units suffix to numeric columns (_usd, _kg)
+- Avoid unnecessary aliases (only alias long names)
+
+Formatting
+- Left align everything
+- Indent using 4 spaces
+- Place operators (and, or) and commas at line start (leading commas)
+- Format clauses (select, from, where, group by, order by) following single-line (if single item) or multi-line (if multiple items) pattern
+- Format case and window functions neatly over multiple lines if complex
+</sql_style_guide>
+
+<bigquery_warnings>
+- LIMIT clause must be a literal integer, not a parameter
+- BigQuery has a 256 JOIN limit per query
+- Recursive CTEs have limitations in BigQuery
+- Query complexity limits: avoid excessive nesting (>8 levels)
+- Queries have a maximum length of 1MB
+
+Be cautious about query cost - avoid:
+- SELECT * on large tables
+- Cross joins (Cartesian products)
+- Queries without WHERE clauses on large tables
+- Joins without proper filtering
+- Queries that process many days/months of partitioned data
+- Always try to limit the amount of data scanned
+- Certain operations may fail with "Resources exceeded" on large data
+</bigquery_warnings>
+
+<bigquery_requirements>
+- Uses Standard SQL syntax (not Legacy SQL)
+- Properly references the table using the full path notation
+
+Uses appropriate BigQuery functions and operators:
+- Use struct and array functions for working with nested and repeated fields
+- Use unnest for flattening arrays (with optional offset clause if needed)
+- Use BigQuery-specific window functions with over clause properly formatted
+- Use date, datetime, timestamp functions correctly, being careful with timezone handling
+- Leverage approx_count_distinct instead of count(distinct) for large datasets
+- Use _table_suffix for wildcard table queries when appropriate
+
+Follows best practices for performance optimization:
+- Minimizes the amount of data processed (use column selection instead of SELECT *)
+- Uses appropriate partitioning filters (e.g., where _partitiondate = '2023-01-01')
+- Uses clustering columns in filters and joins
+- Applies filters early in the query
+- Uses appropriate joins when necessary (preferring small tables on the left in left joins)
+- Uses with clauses for repeated subqueries
+- Considers materialized views for frequently used complex queries
+
+- Handles NULL values appropriately using coalesce, nullif correctly
+
+Uses appropriate timestamp/datetime functions if working with dates:
+- timestamp_add, timestamp_diff, timestamp_trunc for timestamp operations
+- date_add, date_sub, date_diff, date_trunc for date operations
+- Proper formatting of timestamp literals (timestamp '2023-01-01 12:00:00')
+
+Uses appropriate data types and casting:
+- int64, float64, bool, string, bytes, date, datetime, time, timestamp, etc.
+- Use proper cast or conversion functions between types
+- Handle numeric/bignumeric precision appropriately for financial calculations
+</bigquery_requirements>
