@@ -1,11 +1,11 @@
 <goal>
-I need a BigQuery SQL query that {{STATE YOUR DESIRED ENDRESULT HERE}}. 
+{{STATE WHAT YOU WANT THE QUERY TO ACHIEVE}}
 </goal>
 
 <table_info>
-Table path: {{COPY BIGQUERY TABLE PATH HERE}}
+Table path: {{COPY THE EXACT TABLE LOCATION AND MENTION ANY PARTITIONING IF APPLICABLE}}
 
-Table Schema: {{COPY BIGQUERY TABLE JSON SCHEMA HERE}}
+Table Schema: {{COPY THE TABLE JSON SCHEMA}}
 </table_info>
 
 <return_format>
@@ -19,7 +19,7 @@ Please respond with a single SQL query that is:
    - Estimated data processed (when possible to determine)
 
 Example format:
-/*
+/* 
 -- SECTION: Query to calculate daily active users
 -- Purpose: This query finds unique daily active users by date
 -- Cost warning: Processes approximately XX GB per month of data
@@ -112,6 +112,8 @@ Uses appropriate BigQuery functions and operators:
 - Use date, datetime, timestamp functions correctly, being careful with timezone handling
 - Leverage approx_count_distinct instead of count(distinct) for large datasets
 - Use _table_suffix for wildcard table queries when appropriate
+- Use to_json_string(struct()) for creating reliable unique identifiers
+- Use regexp_contains() for efficient pattern matching
 
 Follows best practices for performance optimization:
 - Minimizes the amount of data processed (use column selection instead of SELECT *)
@@ -134,3 +136,15 @@ Uses appropriate data types and casting:
 - Use proper cast or conversion functions between types
 - Handle numeric/bignumeric precision appropriately for financial calculations
 </bigquery_requirements>
+
+<google_analytics_4_best_practices>
+- Use table wildcards (events_YYYYMMDD* or events_YYYYMM*) rather than explicit UNION ALL statements for querying multiple days or months of GA4 data
+- Apply filters as early as possible in the query (especially event_name and event_date filters)
+- When extracting session data:
+  * Session IDs are stored in event_params with key 'ga_session_id'
+  * Use both user_pseudo_id and session_id together to uniquely identify sessions
+  * The 'session_start' event_name indicates the beginning of a session
+- Handle nested and repeated fields correctly:
+  * Use UNNEST for event_params and items arrays
+  * Extract values with appropriate subqueries for nested structures
+</google_analytics_4_best_practices>
